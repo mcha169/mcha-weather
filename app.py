@@ -1,104 +1,79 @@
 import streamlit as st
 import requests
-from datetime import datetime
 
-# 1. سڕینەوەی ڕەگ و ڕیشەی هەموو نیشانە و لۆگۆ و دوگمە زیادەکان
+# 1. ڕێکخستنی لاپەڕە و شاردنەوەی هەموو نیشانە سەوز و سوورەکان
 st.set_page_config(page_title="Weather", layout="centered")
 
 st.markdown("""
     <style>
-    /* 1. سڕینەوەی لۆگۆی ستریملێت و دوگمەی دیپلۆی و فووتەر */
     #MainMenu, footer, header, .viewerBadge_container__1QS1n, #stDecoration {visibility: hidden; display:none !important;}
     [data-testid="stStatusWidget"] {display:none !important;}
-    .stDeployButton {display:none !important;}
-    div[data-testid="stToolbar"] {display:none !important;}
-    iframe[title="Managed Navigation"] {display:none !important;}
-    
-    /* 2. پاککردنەوەی باکگراوند و ڕەنگی بنچینەیی */
-    .stApp { background-color: #000; }
-    
-    /* 3. دیزاینی مۆدێرنی ئایفۆن (زۆر خاوێن) */
-    .iphone-wrapper {
+    .stApp {
+        background-color: black;
+    }
+    .weather-info {
         text-align: center;
         color: white;
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-        padding-top: 50px;
+        text-shadow: 2px 2px 15px rgba(0,0,0,1);
+        font-family: 'Segoe UI', sans-serif;
+        margin-top: 50px;
     }
-    
-    .city { font-size: 38px; font-weight: 500; margin-bottom: 0px; text-shadow: 0px 4px 15px rgba(0,0,0,0.4); }
-    .temp { font-size: 110px; font-weight: 200; margin: -10px 0px; text-shadow: 0px 4px 20px rgba(0,0,0,0.4); }
-    .status { font-size: 22px; font-weight: 400; opacity: 0.9; margin-bottom: 5px; }
-    .hl { font-size: 19px; font-weight: 400; opacity: 0.8; margin-bottom: 35px; }
-    
-    /* 4. کارتی زانیارییەکان (Glassmorphism) */
-    .details-grid {
-        background: rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(25px);
-        -webkit-backdrop-filter: blur(25px);
-        border-radius: 22px;
-        padding: 25px;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        max-width: 360px;
-        margin: 0 auto;
+    .temp {
+        font-size: 110px !important;
+        font-weight: 200;
+        margin: 0;
     }
-    
-    .detail-item { text-align: center; }
-    .detail-label { font-size: 13px; opacity: 0.6; display: block; margin-bottom: 5px; }
-    .detail-value { font-size: 19px; font-weight: 600; }
-
-    /* 5. جوانکردنی شوێنی نووسینی شار */
-    .stTextInput>div>div>input {
-        background-color: rgba(255, 255, 255, 0.15) !important;
-        color: white !important;
-        border-radius: 15px !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        text-align: center;
-        height: 45px;
+    .city-name {
+        font-size: 40px;
+        font-weight: 400;
+        margin-bottom: -20px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. دانانی باکگراوندی ڕاستەقینەی ئایفۆن بەپێی کات
-def apply_bg():
-    hour = datetime.now().hour
-    if 6 <= hour < 18:
-        # وێنەی ڕۆژی هەوراوی ئایفۆن
-        bg = "https://w0.peakpx.com/wallpaper/354/660/HD-wallpaper-iphone-ios-15-weather-cloudy-day.jpg"
-    else:
-        # وێنەی شەوی ئەستێرە و مانگی ئایفۆن
-        bg = "https://w0.peakpx.com/wallpaper/934/547/HD-wallpaper-weather-iphone-stars.jpg"
-    
+# 2. فانکشنی باکگراوند (هەوری جوڵاو و ئەستێرە)
+def set_bg(url):
     st.markdown(f"""
         <style>
-        .stApp {{ background-image: url("{bg}"); background-size: cover; background-position: center; }}
+        .stApp {{
+            background-image: url("{url}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }}
         </style>
         """, unsafe_allow_html=True)
 
-apply_bg()
+# وێنەی ئەو هەورە جوڵاوەی کە ویستت (بۆ شەو و ڕۆژ)
+moving_clouds_night = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/l41lTfuxV3XyXG9eU/giphy.gif"
+moving_clouds_day = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/cnXvL06uK9Tf8U54fD/giphy.gif"
 
-# 3. بەشی گەڕان
-city = st.text_input("", placeholder="Search City...", label_visibility="collapsed")
+# 3. سێرچ کردنی شار
+city = st.text_input("", placeholder="ناوی شار بنووسە...", label_visibility="collapsed")
 
 if city:
     try:
-        # هێنانی زانیارییەکان
         res = requests.get(f"https://wttr.in/{city}?format=j1").json()
         curr = res['current_condition'][0]
-        weather = res['weather'][0]
+        temp = curr['temp_C']
         
+        # لێرە دیاری دەکەین ئایا ڕۆژە یان شەوە بۆ ئەوەی وێنە جوڵاوەکە بگۆڕدرێت
+        import datetime
+        hour = datetime.datetime.now().hour
+        if 6 <= hour < 18:
+            set_bg(moving_clouds_day)
+        else:
+            set_bg(moving_clouds_night)
+            
         st.markdown(f"""
-            <div class="iphone-wrapper">
-                <div class="city">{city.capitalize()}</div>
-                <div class="temp">{curr['temp_C']}°</div>
-                <div class="status">{curr['weatherDesc'][0]['value']}</div>
-                <div class="hl">H:{weather['maxtempC']}°  L:{weather['mintempC']}°</div>
-                
-                <div class="details-grid">
-                    <div class="detail-item">
-                        <span class="detail-label">🌧 Chance of Rain</span>
-                        <span class="detail-value">{weather['hourly'][0]['chanceofrain']}%</span>
-                    </div>
-                    <div class="detail-item">
+            <div class="weather-info">
+                <p class="city-name">{city.capitalize()}</p>
+                <h1 class="temp">{temp}°</h1>
+                <p style="font-size: 20px;">{curr['weatherDesc'][0]['value']}</p>
+            </div>
+        """, unsafe_allow_html=True)
+    except:
+        st.error("ناوی شارەکە بە دروستی بنووسە")
+else:
+    # وێنەی سەرەتایی (هەمان ئەو وێنە جوڵاوەی ویستت)
+    set_bg(moving_clouds_night)
