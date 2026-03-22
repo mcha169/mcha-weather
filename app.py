@@ -1,38 +1,42 @@
 import streamlit as st
 import requests
 
-# 1. ڕێکخستنی لاپەڕە و شاردنەوەی هەموو نیشانە سەوز و سوورەکان
-st.set_page_config(page_title="Weather", layout="centered")
+# 1. ڕێکخستنی لاپەڕە و شاردنەوەی هەموو لۆگۆ و نیشانە زیادەکان (سەوز و سوورەکە)
+st.set_page_config(page_title="Weather App", page_icon="🌤️", layout="centered")
 
-st.markdown("""
+hide_elements = """
     <style>
-    #MainMenu, footer, header, .viewerBadge_container__1QS1n, #stDecoration {visibility: hidden; display:none !important;}
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .viewerBadge_container__1QS1n {display: none !important;}
+    #stDecoration {display:none !important;}
     [data-testid="stStatusWidget"] {display:none !important;}
-    .stApp {
-        background-color: black;
-    }
-    .weather-info {
-        text-align: center;
-        color: white;
-        text-shadow: 2px 2px 15px rgba(0,0,0,1);
-        font-family: 'Segoe UI', sans-serif;
-        margin-top: 50px;
-    }
-    .temp {
-        font-size: 110px !important;
-        font-weight: 200;
-        margin: 0;
-    }
-    .city-name {
-        font-size: 40px;
-        font-weight: 400;
-        margin-bottom: -20px;
-    }
     </style>
-    """, unsafe_allow_html=True)
+    """
+st.markdown(hide_elements, unsafe_allow_html=True)
 
-# 2. فانکشنی باکگراوند (هەوری جوڵاو و ئەستێرە)
-def set_bg(url):
+# 2. فانکشنی دیاریکردنی وێنەی جوڵاو (GIF) بەپێی کەشوهەوا و کات
+def get_weather_gif(desc, is_day):
+    desc = desc.lower()
+    
+    # ئەگەر شەو بوو (وەک وێنەکەی ناردت ئەستێرە و هەور)
+    if not is_day:
+        return "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/l41lTfuxV3XyXG9eU/giphy.gif"
+    
+    # ئەگەر ڕۆژ بوو و باران بوو
+    if "rain" in desc or "drizzle" in desc:
+        return "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/t7Qb8655Z1VfBGr5XB/giphy.gif"
+    
+    # ئەگەر ڕۆژ بوو و هەور بوو
+    elif "cloud" in desc or "overcast" in desc:
+        return "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/cnXvL06uK9Tf8U54fD/giphy.gif"
+    
+    # ڕۆژی گەش و هەتاو
+    return "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/0hNftA9q66y3Xq8BfH/giphy.gif"
+
+# 3. فانکشنی جێگیرکردنی باکگراوند و ستایلی کارتەکان
+def apply_style(url):
     st.markdown(f"""
         <style>
         .stApp {{
@@ -41,39 +45,63 @@ def set_bg(url):
             background-position: center;
             background-attachment: fixed;
         }}
+        .weather-info {{
+            text-align: center;
+            color: white;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }}
+        .temp-text {{
+            font-size: 100px !important;
+            font-weight: 200;
+            margin-bottom: -20px;
+        }}
+        .desc-text {{
+            font-size: 25px;
+            font-weight: 400;
+            margin-bottom: 30px;
+        }}
+        .card {{
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin: 10px 0;
+        }}
         </style>
         """, unsafe_allow_html=True)
 
-# وێنەی ئەو هەورە جوڵاوەی کە ویستت (بۆ شەو و ڕۆژ)
-moving_clouds_night = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/l41lTfuxV3XyXG9eU/giphy.gif"
-moving_clouds_day = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6bmZueXp6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/cnXvL06uK9Tf8U54fD/giphy.gif"
-
-# 3. سێرچ کردنی شار
-city = st.text_input("", placeholder="ناوی شار بنووسە...", label_visibility="collapsed")
+# 4. دەستپێکردنی بەرنامە
+city = st.text_input("", placeholder="ناوی شار بنووسە... (وەک: Erbil)", label_visibility="collapsed")
 
 if city:
     try:
         res = requests.get(f"https://wttr.in/{city}?format=j1").json()
         curr = res['current_condition'][0]
-        temp = curr['temp_C']
         
-        # لێرە دیاری دەکەین ئایا ڕۆژە یان شەوە بۆ ئەوەی وێنە جوڵاوەکە بگۆڕدرێت
+        temp = curr['temp_C']
+        desc = curr['weatherDesc'][0]['value']
+        is_day = curr['weatherDesc'][0]['value'] # هەندێک API کاتەکە دەدەن، لێرەدا بەپێی وەسفەکە دیاری دەکەین
+        
+        # دیاریکردنی ئەوەی ئایا کاتەکە شەوە یان نا (بۆ باکگراوندەکە)
         import datetime
         hour = datetime.datetime.now().hour
-        if 6 <= hour < 18:
-            set_bg(moving_clouds_day)
-        else:
-            set_bg(moving_clouds_night)
-            
+        daytime = 6 <= hour < 18
+        
+        apply_style(get_weather_gif(desc, daytime))
+        
+        # نیشاندانی زانیارییەکان ڕێک وەک وێنەی مۆبایلەکە
         st.markdown(f"""
             <div class="weather-info">
-                <p class="city-name">{city.capitalize()}</p>
-                <h1 class="temp">{temp}°</h1>
-                <p style="font-size: 20px;">{curr['weatherDesc'][0]['value']}</p>
+                <p style="font-size: 30px; margin-bottom: 0;">{city.capitalize()}</p>
+                <h1 class="temp-text">{temp}°</h1>
+                <p class="desc-text">{desc}</p>
+                <div class="card">
+                   <p>خێرایی با: {curr['windspeedKmph']} km/h | شێ: {curr['humidity']}%</p>
+                </div>
             </div>
         """, unsafe_allow_html=True)
+        
     except:
-        st.error("ناوی شارەکە بە دروستی بنووسە")
-else:
-    # وێنەی سەرەتایی (هەمان ئەو وێنە جوڵاوەی ویستت)
-    set_bg(moving_clouds_night)
+        st.
