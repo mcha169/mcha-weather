@@ -2,7 +2,16 @@ import streamlit as st
 import requests
 
 # ڕێکخستنی لاپەڕە
-st.set_page_config(page_title="M C H A Weather", page_icon="🌤️")
+st.set_page_config# لادانی نیشانەی Fork و مێنیووی سەرەوە
+hide_style = """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .viewerBadge_container__1QS1n {display: none !important;}
+    </style>
+    """
+st.markdown(hide_style, unsafe_allow_html=True)(page_title="M C H A Weather", page_icon="🌤️")
 
 # فانکشنی دۆزینەوەی وێنەی جوڵاو (GIF) بەپێی کەشوهەوا
 def get_weather_gif(weather_desc):
