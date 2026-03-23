@@ -3,121 +3,160 @@ import requests
 from datetime import datetime
 
 # -------------------- PAGE CONFIG --------------------
-st.set_page_config(page_title="Weather App", layout="centered")
+st.set_page_config(layout="centered")
 
-# -------------------- HIDE STREAMLIT UI --------------------
-hide_streamlit_style = """
+# -------------------- HIDE ALL STREAMLIT UI --------------------
+st.markdown("""
 <style>
+
+/* Hide everything */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 header {visibility: hidden;}
-[data-testid="stToolbar"] {display: none;}
-[data-testid="stDecoration"] {display: none;}
-[data-testid="stStatusWidget"] {display: none;}
-</style>
-"""
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+.stDeployButton {display:none;}
+[data-testid="stToolbar"] {display:none !important;}
+[data-testid="stDecoration"] {display:none !important;}
+[data-testid="stStatusWidget"] {display:none !important;}
+[data-testid="stFooter"] {display:none !important;}
+[data-testid="stHeader"] {display:none !important;}
+button[kind="header"] {display:none !important;}
 
-# -------------------- GET TIME FOR BACKGROUND --------------------
+/* Remove padding */
+.block-container {
+    padding-top: 0rem;
+    padding-bottom: 0rem;
+    padding-left: 0rem;
+    padding-right: 0rem;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# -------------------- TIME-BASED BACKGROUND --------------------
 hour = datetime.now().hour
 
 if 6 <= hour < 18:
-    bg_image = "https://images.unsplash.com/photo-1501973801540-537f08ccae7b"
+    bg = "https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=1920"
 else:
-    bg_image = "https://images.unsplash.com/photo-1501785888041-af3ef285b470"
+    bg = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1920"
 
-# -------------------- CUSTOM CSS (GLASSMORPHISM + IOS STYLE) --------------------
+# -------------------- GLOBAL CSS --------------------
 st.markdown(f"""
 <style>
 
-body {{
-    background-image: url('{bg_image}');
+html, body, [class*="css"] {{
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: white;
+}}
+
+.stApp {{
+    background: url("{bg}");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
 }}
 
-.main {{
-    background: transparent;
-}}
-
-.center {{
+/* CENTER CONTENT */
+.container {{
     text-align: center;
-    color: white;
-    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    margin-top: 80px;
 }}
 
-.temp {{
-    font-size: 80px;
-    font-weight: 200;
-}}
-
+/* CITY */
 .city {{
-    font-size: 40px;
+    font-size: 42px;
     font-weight: 300;
 }}
 
+/* TEMP */
+.temp {{
+    font-size: 90px;
+    font-weight: 200;
+    margin-top: -10px;
+}}
+
+/* DESCRIPTION */
 .desc {{
-    font-size: 22px;
-    margin-bottom: 20px;
+    font-size: 20px;
+    opacity: 0.9;
 }}
 
+/* H/L */
+.hl {{
+    font-size: 18px;
+    margin-top: 5px;
+    opacity: 0.85;
+}}
+
+/* GLASS CARD */
 .glass {{
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 20px;
+    width: 85%;
+    margin: 40px auto;
     padding: 20px;
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    color: white;
-    margin-top: 20px;
+
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 25px;
+
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    border: 1px solid rgba(255,255,255,0.2);
 }}
 
+/* ROW ITEMS */
 .row {{
     display: flex;
     justify-content: space-between;
-    margin: 10px 0;
+    padding: 12px 0;
     font-size: 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
 }}
 
+.row:last-child {{
+    border-bottom: none;
+}}
+
+/* INPUT BOX */
 input {{
-    background-color: rgba(255,255,255,0.2) !important;
+    background: rgba(255,255,255,0.2) !important;
+    border-radius: 10px !important;
     color: white !important;
+    text-align: center;
 }}
 
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------- CITY INPUT --------------------
-city = st.text_input("Enter city (in English):", "Erbil")
+# -------------------- INPUT --------------------
+city = st.text_input("", "Erbil")
 
-# -------------------- FETCH WEATHER --------------------
+# -------------------- WEATHER FUNCTION --------------------
 def get_weather(city):
     url = f"https://wttr.in/{city}?format=j1"
-    response = requests.get(url)
-    data = response.json()
-    return data
+    return requests.get(url).json()
 
+# -------------------- MAIN APP --------------------
 try:
     data = get_weather(city)
 
     current = data["current_condition"][0]
-    weather = data["weather"][0]
+    today = data["weather"][0]
 
     temp = current["temp_C"]
     desc = current["weatherDesc"][0]["value"]
     humidity = current["humidity"]
     wind = current["windspeedKmph"]
-    chance_rain = weather["hourly"][0]["chanceofrain"]
-    max_temp = weather["maxtempC"]
-    min_temp = weather["mintempC"]
+    rain = today["hourly"][0]["chanceofrain"]
+    max_t = today["maxtempC"]
+    min_t = today["mintempC"]
 
-    # -------------------- MAIN UI --------------------
+    # -------------------- MAIN DISPLAY --------------------
     st.markdown(f"""
-    <div class="center">
+    <div class="container">
         <div class="city">{city}</div>
         <div class="temp">{temp}°</div>
         <div class="desc">{desc}</div>
-        <div class="desc">H:{max_temp}°  L:{min_temp}°</div>
+        <div class="hl">H:{max_t}°  L:{min_t}°</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -125,19 +164,13 @@ try:
     st.markdown(f"""
     <div class="glass">
         <div class="row">
-            <span>🌧 باران</span>
-            <span>{chance_rain}%</span>
+            <span>🌧 ئەگەری باران</span>
+            <span>{rain}%</span>
         </div>
         <div class="row">
-            <span>💧 شڵەیی</span>
+            <span>💧 شێ</span>
             <span>{humidity}%</span>
         </div>
         <div class="row">
-            <span>🌬 با</span>
+            <span>💨 خێرایی با</span>
             <span>{wind} km/h</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-except:
-    st.error("Could not fetch weather data. Try another city.")
