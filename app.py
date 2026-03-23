@@ -1,4 +1,13 @@
-import streamlit as st
+</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+except:
+    st.markdown("""
+    <div style="text-align:center; margin-top:100px; color:white;">
+        Failed to load weather. Try another city.
+    </div>
+    """, unsafe_allow_html=True)import streamlit as st
 import requests
 from datetime import datetime
 
