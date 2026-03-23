@@ -2,85 +2,93 @@ import streamlit as st
 import requests
 from datetime import datetime
 
-# 1. شاردنەوەی هەموو نیشانە و لۆگۆ زیادەکان (بە شێوەیەکی توند)
+# 1. شاردنەوەی هەموو شتە زیادەکانی ستریملێت بە شێوەیەکی توند
 st.set_page_config(page_title="Weather", layout="centered")
 
 st.markdown("""
     <style>
-    #MainMenu, footer, header, .viewerBadge_container__1QS1n, #stDecoration {visibility: hidden; display:none !important;}
-    [data-testid="stStatusWidget"], .stDeployButton, div[data-testid="stToolbar"] {display:none !important;}
+    /* لادانی لۆگۆ و تاج و مینیو */
+    header, footer, .viewerBadge_container__1QS1n, #stDecoration, .stDeployButton {display:none !important;}
+    [data-testid="stStatusWidget"], [data-testid="stToolbar"] {display:none !important;}
     
-    .stApp { background-color: #000; }
-    
-    .iphone-ui {
-        text-align: center;
+    .stApp {
+        background-color: #000;
         color: white;
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-        padding-top: 20px;
     }
     
-    .city-name { font-size: 35px; font-weight: 400; margin-bottom: 0px; }
-    .temp-val { font-size: 95px; font-weight: 100; margin: -10px 0px; }
-    .condition { font-size: 20px; opacity: 0.9; }
-    .hi-lo { font-size: 18px; opacity: 0.8; margin-bottom: 30px; }
+    /* دیزاینی ناوەڕاست وەک ئایفۆن */
+    .weather-main {
+        text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        margin-top: 30px;
+    }
+    .city { font-size: 32px; font-weight: 500; margin-bottom: 0; }
+    .temp { font-size: 90px; font-weight: 200; margin: -10px 0; }
+    .desc { font-size: 20px; opacity: 0.8; }
+    .hl { font-size: 18px; font-weight: 400; }
     
-    .glass-card {
+    /* کارتی زانیاری خوارەوە */
+    .info-container {
         background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
+        backdrop-filter: blur(15px);
         border-radius: 20px;
         padding: 20px;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
+        margin-top: 40px;
+        display: flex;
+        justify-content: space-around;
         border: 0.5px solid rgba(255, 255, 255, 0.1);
-        max-width: 350px;
-        margin: 20px auto;
     }
-    
-    .item-val { font-size: 18px; font-weight: 600; display: block; }
-    .item-label { font-size: 12px; opacity: 0.6; }
+    .info-box { text-align: center; }
+    .info-label { font-size: 12px; opacity: 0.6; display: block; }
+    .info-value { font-size: 16px; font-weight: 600; }
+
+    /* جوانکردنی شوێنی گەڕان */
+    .stTextInput input {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        border-radius: 12px !important;
+        border: none !important;
+        text-align: center;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. دانانی باکگراوند
-def apply_bg():
+# 2. فانکشنی باکگراوند (هەور و ئەستێرەکان)
+def set_bg():
     hour = datetime.now().hour
     if 6 <= hour < 18:
-        url = "https://w0.peakpx.com/wallpaper/354/660/HD-wallpaper-iphone-ios-15-weather-cloudy-day.jpg"
+        bg = "https://w0.peakpx.com/wallpaper/354/660/HD-wallpaper-iphone-ios-15-weather-cloudy-day.jpg"
     else:
-        url = "https://w0.peakpx.com/wallpaper/934/547/HD-wallpaper-weather-iphone-stars.jpg"
-    st.markdown(f'<style>.stApp {{ background-image: url("{url}"); background-size: cover; }}</style>', unsafe_allow_html=True)
+        bg = "https://w0.peakpx.com/wallpaper/934/547/HD-wallpaper-weather-iphone-stars.jpg"
+    st.markdown(f'<style>.stApp {{ background-image: url("{bg}"); background-size: cover; background-position: center; }}</style>', unsafe_allow_html=True)
 
-apply_bg()
+set_bg()
 
-# 3. سێرچ و وەرگرتنی داتا
-city = st.text_input("", placeholder="Search City...", label_visibility="collapsed")
+# 3. بەشی سێرچ
+city = st.text_input("", placeholder="ناوی شار بنووسە...", label_visibility="collapsed")
 
 if city:
     try:
-        # بەکارهێنانی لینکێکی جێگیرتر بۆ داتا
-        url = f"https://wttr.in/{city}?format=j1"
-        res = requests.get(url, timeout=10).json()
-        curr = res['current_condition'][0]
-        weather = res['weather'][0]
+        data = requests.get(f"https://wttr.in/{city}?format=j1").json()
+        curr = data['current_condition'][0]
+        weather = data['weather'][0]
         
+        # نیشاندانی زانیارییەکان ڕاستەوخۆ بەبێ ئەوەی ئیرۆر بدات
         st.markdown(f"""
-            <div class="iphone-ui">
-                <div class="city-name">{city.capitalize()}</div>
-                <div class="temp-val">{curr['temp_C']}°</div>
-                <div class="condition">{curr['weatherDesc'][0]['value']}</div>
-                <div class="hi-lo">H:{weather['maxtempC']}°  L:{weather['mintempC']}°</div>
+            <div class="weather-main">
+                <div class="city">{city.capitalize()}</div>
+                <div class="temp">{curr['temp_C']}°</div>
+                <div class="desc">{curr['weatherDesc'][0]['value']}</div>
+                <div class="hl">H:{weather['maxtempC']}°  L:{weather['mintempC']}°</div>
                 
-                <div class="glass-card">
-                    <div><span class="item-label">🌧 Chance of Rain</span><span class="item-val">{weather['hourly'][0]['chanceofrain']}%</span></div>
-                    <div><span class="item-label">💧 Humidity</span><span class="item-val">{curr['humidity']}%</span></div>
-                    <div><span class="item-label">💨 Wind Speed</span><span class="item-val">{curr['windspeedKmph']} km/h</span></div>
-                    <div><span class="item-label">📅 Updated</span><span class="item-val">{datetime.now().strftime('%H:%M')}</span></div>
+                <div class="info-container">
+                    <div class="info-box"><span class="info-label">🌧 Rain</span><span class="info-value">{weather['hourly'][0]['chanceofrain']}%</span></div>
+                    <div class="info-box"><span class="info-label">💧 Humid</span><span class="info-value">{curr['humidity']}%</span></div>
+                    <div class="info-box"><span class="info-label">💨 Wind</span><span class="info-value">{curr['windspeedKmph']}km</span></div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
-    except Exception as e:
-        st.error(f"Error: تکایە ناوی شارەکە بە ئینگلیزی بنووسە")
+    except:
+        st.markdown('<p style="text-align:center; color:red;">ناوی شارەکە بە دروستی بنووسە</p>', unsafe_allow_html=True)
 else:
-    st.markdown('<div style="text-align:center; color:white; margin-top:150px; opacity:0.6;">Search for a city...</div>', unsafe_allow_html=True)
+    st.markdown('<div style="text-align:center; margin-top:100px; opacity:0.5;">Enter City Name</div>', unsafe_allow_html=True)
