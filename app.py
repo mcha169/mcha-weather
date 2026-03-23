@@ -2,30 +2,28 @@ import streamlit as st
 import requests
 from datetime import datetime
 
-# 1. ڕێکخستنی لاپەڕە و سڕینەوەی هەموو نیشانە زیادەکان (تاج و مینیو)
+# ڕێکخستنی لاپەڕە و شاردنەوەی هەموو نیشانەکان
 st.set_page_config(layout="centered", page_title="MCHA Weather")
 
+# توندترین CSS بۆ سڕینەوەی شریتە سوورەکە و تاجەکە
 st.markdown("""
 <style>
-/* سڕینەوەی هەموو شتە زیادەکانی ستریملێت */
 header, footer, #MainMenu { display: none !important; visibility: hidden !important; }
 .stDeployButton { display: none !important; visibility: hidden !important; }
 #stDecoration { display: none !important; visibility: hidden !important; }
 div[data-testid="stFooter"] { display: none !important; visibility: hidden !important; }
 [data-testid="stStatusWidget"] { display: none !important; visibility: hidden !important; }
+div[class*="st-emotion-cache"] footer { display: none !important; }
 
-/* چاککردنی سندووقی سێرچ */
+/* نیشاندانی سندووقی سێرچ بە دروستی */
 div[data-baseweb="select"], div[data-baseweb="select"] * { display: block !important; }
 .block-container { padding: 0 !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# 2. دیاریکردنی باکگراوند (ڕۆژ و شەو)
+# وێنەی پشتەوە
 hour = datetime.now().hour
-if 6 <= hour < 18:
-    bg = "https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=1920"
-else:
-    bg = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1920"
+bg = "https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=1920" if 6 <= hour < 18 else "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1920"
 
 st.markdown(f"""
 <style>
@@ -34,10 +32,9 @@ st.markdown(f"""
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
-    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
     color: white;
 }}
-.container {{ text-align: center; margin-top: 90px; }}
+.container {{ text-align: center; margin-top: 80px; }}
 .city {{ font-size: 42px; font-weight: 300; }}
 .temp {{ font-size: 95px; font-weight: 200; }}
 .desc {{ font-size: 20px; opacity: 0.9; }}
@@ -53,22 +50,18 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-# 3. سێرچ و لیستی شارەکان
+# سێرچ
 cities = ["Erbil", "Sulaymaniyah", "Duhok", "Kirkuk", "Halabja", "Baghdad", "London", "Paris", "New York", "Dubai", "Istanbul"]
 city = st.selectbox("", cities)
 
-# 4. وەرگرتنی زانیارییەکان و نیشاندانیان
 try:
-    # وەرگرتنی داتا لە wttr.in
     res = requests.get(f"https://wttr.in/{city}?format=j1").json()
     curr = res["current_condition"][0]
     today = res["weather"][0]
 
-    # لۆژیکی باران (وەرگرتنی بەرزترین ڕێژە)
-    rain_values = [int(h["chanceofrain"]) for h in today["hourly"]]
-    rain = max(rain_values)
+    # چاککردنی لۆژیکی باران
+    rain = max([int(h["chanceofrain"]) for h in today["hourly"]])
 
-    # نیشاندانی پلەی گەرمی و شارەکە
     st.markdown(f"""
     <div class="container">
         <div class="city">{city}</div>
@@ -76,13 +69,11 @@ try:
         <div class="desc">{curr["weatherDesc"][0]["value"]}</div>
         <div class="hl">H:{today["maxtempC"]}°  L:{today["mintempC"]}°</div>
     </div>
-    
     <div class="glass">
         <div class="row"><span>🌧 ئەگەری باران</span><span>{rain}%</span></div>
         <div class="row"><span>💧 شێ</span><span>{curr["humidity"]}%</span></div>
         <div class="row"><span>💨 خێرایی با</span><span>{curr["windspeedKmph"]} km/h</span></div>
     </div>
     """, unsafe_allow_html=True)
-
 except:
-    st.markdown('<div style="text-align:center; margin-top:100px;">Failed to load data.</div>', unsafe_allow_html=True)
+    st.write("Error loading data.")
