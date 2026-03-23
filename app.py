@@ -2,75 +2,109 @@ import streamlit as st
 import requests
 from datetime import datetime
 
-# 1. ڕێکخستنی لاپەڕە و سڕینەوەی هەموو نیشانەکان (تاج، لۆگۆ، مینیو)
-st.set_page_config(layout="centered", page_title="Weather App")
+# -------------------- PAGE CONFIG --------------------
+st.set_page_config(layout="centered")
 
+# -------------------- FORCE HIDE ALL STREAMLIT UI --------------------
 st.markdown("""
 <style>
-/* سڕینەوەی هەموو شتە زیادەکانی ستریملێت */
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-.stDeployButton {display:none !important;}
-[data-testid="stToolbar"] {display:none !important;}
-[data-testid="stDecoration"] {display:none !important;}
-[data-testid="stStatusWidget"] {display:none !important;}
-[data-testid="stFooter"] {display:none !important;}
-[data-testid="stHeader"] {display:none !important;}
 
-/* لادانی بۆشایی سەرەوە */
+/* EXTREME CLEAN MODE */
+.stDeployButton {display:none !important; visibility:hidden !important;}
+footer {display:none !important; visibility:hidden !important;}
+#stDecoration {display:none !important; visibility:hidden !important;}
+header {display:none !important; visibility:hidden !important;}
+[data-testid="stStatusWidget"] {display:none !important; visibility:hidden !important;}
+[data-testid="stToolbar"] {display:none !important; visibility:hidden !important;}
+[data-testid="stHeader"] {display:none !important; visibility:hidden !important;}
+[data-testid="stFooter"] {display:none !important; visibility:hidden !important;}
+button[kind="header"] {display:none !important; visibility:hidden !important;}
+#MainMenu {display:none !important; visibility:hidden !important;}
+
+/* Remove padding */
 .block-container {
-    padding-top: 0rem;
-    padding-bottom: 0rem;
+    padding: 0 !important;
 }
 
-/* فۆنت و ڕەنگی گشتی */
-html, body, [class*="css"] {
-    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
-    color: white;
+/* Remove extra spacing */
+div[data-testid="stVerticalBlock"] {
+    gap: 0rem !important;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
-# 2. دیاریکردنی باکگراوند بەپێی کات (ڕۆژ و شەو)
+# -------------------- TIME-BASED BACKGROUND --------------------
 hour = datetime.now().hour
-if 6 <= hour < 18:
-    bg = "https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=1920" # ڕۆژ
-else:
-    bg = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1920" # شەو
 
+if 6 <= hour < 18:
+    bg = "https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=1920"
+else:
+    bg = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1920"
+
+# -------------------- GLOBAL STYLE --------------------
 st.markdown(f"""
 <style>
+
+html, body {{
+    margin: 0;
+    padding: 0;
+}}
+
 .stApp {{
     background: url("{bg}");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: white;
 }}
 
-/* دیزاینی ناوەڕاست */
+/* MAIN CONTAINER */
 .container {{
     text-align: center;
-    margin-top: 60px;
+    margin-top: 90px;
 }}
 
-.city {{ font-size: 42px; font-weight: 300; }}
-.temp {{ font-size: 90px; font-weight: 200; margin-top: -10px; }}
-.desc {{ font-size: 20px; opacity: 0.9; }}
-.hl {{ font-size: 18px; margin-top: 5px; opacity: 0.85; }}
+/* TEXT STYLES */
+.city {{
+    font-size: 42px;
+    font-weight: 300;
+}}
 
-/* کارتی شوشەیی (Glassmorphism) */
+.temp {{
+    font-size: 95px;
+    font-weight: 200;
+    margin-top: -10px;
+}}
+
+.desc {{
+    font-size: 20px;
+    opacity: 0.9;
+}}
+
+.hl {{
+    font-size: 18px;
+    opacity: 0.85;
+    margin-top: 5px;
+}}
+
+/* GLASS EFFECT */
 .glass {{
-    width: 90%;
+    width: 85%;
     margin: 40px auto;
     padding: 20px;
+
     background: rgba(255, 255, 255, 0.15);
     border-radius: 25px;
+
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.2);
+
+    border: 1px solid rgba(255,255,255,0.25);
 }}
 
+/* ROW */
 .row {{
     display: flex;
     justify-content: space-between;
@@ -78,54 +112,54 @@ st.markdown(f"""
     font-size: 18px;
     border-bottom: 1px solid rgba(255,255,255,0.15);
 }}
-.row:last-child {{ border-bottom: none; }}
 
-/* سندووقی گەڕان */
-input {{
+.row:last-child {{
+    border-bottom: none;
+}}
+
+/* SELECTBOX STYLING */
+div[data-baseweb="select"] > div {{
     background: rgba(255,255,255,0.2) !important;
     border-radius: 12px !important;
     color: white !important;
     text-align: center;
-    border: none !important;
 }}
+
 </style>
 """, unsafe_allow_html=True)
 
-# 3. بەشی نووسین و گەڕان
-city = st.text_input("", "Erbil", label_visibility="collapsed")
+# -------------------- CITY LIST (AUTOCOMPLETE) --------------------
+cities = [
+    "Erbil", "Sulaymaniyah", "Duhok", "Kirkuk",
+    "Baghdad", "Basra",
+    "London", "Paris", "New York", "Los Angeles",
+    "Dubai", "Istanbul", "Berlin", "Tokyo",
+    "Toronto", "Sydney", "Moscow", "Rome"
+]
 
-try:
-    # وەرگرتنی زانیارییەکان
+city = st.selectbox("", cities, index=0)
+
+# -------------------- WEATHER FUNCTION --------------------
+def get_weather(city):
     url = f"https://wttr.in/{city}?format=j1"
-    data = requests.get(url).json()
-    
+    return requests.get(url).json()
+
+# -------------------- FETCH DATA --------------------
+try:
+    data = get_weather(city)
+
     current = data["current_condition"][0]
     today = data["weather"][0]
-    
-    # نیشاندانی زانیارییەکان
+
+    temp = current["temp_C"]
+    desc = current["weatherDesc"][0]["value"]
+    humidity = current["humidity"]
+    wind = current["windspeedKmph"]
+    rain = today["hourly"][0]["chanceofrain"]
+    max_t = today["maxtempC"]
+    min_t = today["mintempC"]
+
+    # -------------------- MAIN DISPLAY --------------------
     st.markdown(f"""
     <div class="container">
-        <div class="city">{city.capitalize()}</div>
-        <div class="temp">{current["temp_C"]}°</div>
-        <div class="desc">{current["weatherDesc"][0]["value"]}</div>
-        <div class="hl">H:{today["maxtempC"]}°  L:{today["mintempC"]}°</div>
-    </div>
-    
-    <div class="glass">
-        <div class="row">
-            <span>🌧 ئەگەری باران</span>
-            <span>{today["hourly"][0]["chanceofrain"]}%</span>
-        </div>
-        <div class="row">
-            <span>💧 شێ</span>
-            <span>{current["humidity"]}%</span>
-        </div>
-        <div class="row">
-            <span>💨 خێرایی با</span>
-            <span>{current["windspeedKmph"]} km/h</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-except:
-    st.markdown('<p style="text-align:center;">Error: City not found</p>', unsafe_allow_html=True)
+        <div class="city">{city}</div>
